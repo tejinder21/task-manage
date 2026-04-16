@@ -56,6 +56,8 @@ jobs:
 
       - name: Test backend
         run: npm run test --workspace backend
+      - name: Audit backend dependencies
+        run: npm audit --audit-level=high --workspace backend
 
   frontend:
     name: Frontend CI
@@ -85,3 +87,6 @@ jobs:
 
       - name: Build frontend
         run: npm run build --workspace frontend
+
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high --workspace frontend
