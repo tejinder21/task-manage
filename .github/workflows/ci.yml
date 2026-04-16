@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend CI
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:alpine
+        env:
+          POSTGRES_DB: taskmanagement
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d taskmanagement"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      PORT: 5000
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/taskmanagement
+      JWT_SECRET: test-secret
+      JWT_EXPIRES_IN: 7d
+      FRONTEND_URL: http://localhost:5173
+      DB_SYNC: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --workspaces --legacy-peer-deps
+
+      - name: Lint backend
+        run: npm run lint --workspace backend
+
+      - name: Build backend
+        run: npm run build --workspace backend
+
+      - name: Test backend
+        run: npm run test --workspace backend
+
+  frontend:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+
+    env:
+      VITE_API_URL: http://localhost:5000/api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --workspaces --legacy-peer-deps
+
+      - name: Lint frontend
+        run: npm run lint --workspace frontend
+
+      - name: Build frontend
+        run: npm run build --workspace frontend
+
+      - name: Test frontend
+        run: npm run test --workspace frontend
